@@ -55,7 +55,7 @@ open index.html
 会议主题：项目沟通会
 会议时间：2026-03-04  10:00  (GMT+08:00) 示例时区城市
 移动会议：378167162
-参会链接：https://meeting.example.com/share/378167162?xlocation=DEMO
+参会链接：https://meeting.example.com/share/378888888?xlocation=PROD
 点击链接，进入H5邀请页面。
 ```
 
