@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>移动会议管理器</title>
+  <style>
+    /* ==========================================
+       CSS Variables - Theme System
+       ========================================== */
+    :root {
+      /* Background Colors */
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F7F7F8;
+      --bg-tertiary: #ECECF1;
+      --bg-hover: #F7F7F8;
+      --bg-overlay: rgba(0, 0, 0, 0.5);
+
+      /* Text Colors */
+      --text-primary: #343541;
+      --text-secondary: #6E6E80;
+      --text-tertiary: #ACACBE;
+      --text-inverse: #FFFFFF;
+
+      /* Border Colors */
+      --border-primary: #D9D9E3;
+      --border-secondary: #ECECF1;
+
+      /* Accent Colors (中国移动蓝) */
+      --accent-primary: #0085D0;
+      --accent-hover: #0066AA;
+      --accent-light: #E6F4FC;
+
+      /* Status Colors */
+      --status-active: #0085D0;
+      --status-upcoming: #F59E0B;
+      --status-ended: #6E6E80;
+      --status-pending: #ACACBE;
+      --status-error: #EF4444;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+      /* Transitions */
+      --transition-fast: 0.15s ease;
+      --transition-normal: 0.25s ease;
+
+      /* Border Radius */
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #343541;
+      --bg-secondary: #444654;
+      --bg-tertiary: #40414F;
+      --bg-hover: #40414F;
+      --bg-overlay: rgba(0, 0, 0, 0.7);
+
+      --text-primary: #ECECF1;
+      --text-secondary: #C5C5D2;
+      --text-tertiary: #8E8EA0;
+      --text-inverse: #343541;
+
+      --border-primary: #565869;
+      --border-secondary: #40414F;
+
+      --accent-light: rgba(0,133,208,0.2);
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ==========================================
+       Base Styles
+       ========================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      transition: background-color var(--transition-normal), color var(--transition-normal);
+    }
+
+    /* ==========================================
+       Header
+       ========================================== */
+    .header {
+      background-color: var(--bg-primary);
+      border-bottom: 1px solid var(--border-secondary);
+      padding: 1rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: background-color var(--transition-normal), border-color var(--transition-normal);
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1rem;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* ==========================================
+       Buttons
+       ========================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background-color: var(--accent-primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-primary);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--bg-hover);
+      border-color: var(--text-tertiary);
+    }
+
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: 50%;
+      background-color: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-primary);
+      font-size: 1.125rem;
+    }
+
+    .btn-icon:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .btn-danger {
+      background-color: transparent;
+      color: var(--status-error);
+      border: 1px solid var(--status-error);
+    }
+
+    .btn-danger:hover {
+      background-color: rgba(239, 68, 68, 0.1);
+    }
+
+    .btn-sm {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.8125rem;
+    }
+
+    /* ==========================================
+       Main Content
+       ========================================== */
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    /* Search Bar */
+    .search-bar {
+      margin-bottom: 1.5rem;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      max-width: 400px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      font-size: 0.875rem;
+      background-color: var(--bg-tertiary);
+      border: 1px solid transparent;
+      border-radius: var(--radius-lg);
+      color: var(--text-primary);
+      transition: all var(--transition-fast);
+    }
+
+    .search-input:focus {
+      outline: none;
+      background-color: var(--bg-primary);
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.875rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+    }
+
+    /* ==========================================
+       Meeting Grid
+       ========================================== */
+    .meeting-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+
+    /* ==========================================
+       Meeting Card
+       ========================================== */
+    .meeting-card {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      transition: all var(--transition-normal);
+      position: relative;
+    }
+
+    .meeting-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--border-primary);
+    }
+
+    .meeting-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .meeting-title-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-indicator.pulse {
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.2); }
+    }
+
+    .meeting-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .meeting-actions {
+      display: flex;
+      gap: 0.25rem;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    .meeting-card:hover .meeting-actions {
+      opacity: 1;
+    }
+
+    .btn-icon-sm {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      font-size: 0.875rem;
+      background: transparent;
+      border: none;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--transition-fast);
+    }
+
+    .btn-icon-sm:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .meeting-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .meeting-info-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .meeting-info-item .icon {
+      width: 16px;
+      text-align: center;
+      color: var(--text-tertiary);
+    }
+
+    .meeting-info-item .value {
+      color: var(--text-primary);
+    }
+
+    .password-value {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .password-mask {
+      letter-spacing: 2px;
+    }
+
+    .btn-toggle-password {
+      font-size: 0.75rem;
+      color: var(--accent-primary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .btn-toggle-password:hover {
+      text-decoration: underline;
+    }
+
+    .meeting-card-footer {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-join {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 0.9375rem;
+      font-weight: 500;
+    }
+
+    /* ==========================================
+       Empty State
+       ========================================== */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state-desc {
+      font-size: 0.875rem;
+      color: var(--text-tertiary);
+    }
+
+    /* ==========================================
+       Modal
+       ========================================== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg-overlay);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-normal);
+      padding: 1rem;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background-color: var(--bg-secondary);
+      border-radius: var(--radius-xl);
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow: hidden;
+      transform: scale(0.95);
+      transition: transform var(--transition-normal);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-overlay.active .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-secondary);
+    }
+
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--text-tertiary);
+      font-size: 1.25rem;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--transition-fast);
+    }
+
+    .modal-close:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 1.25rem;
+      overflow-y: auto;
+      max-height: calc(90vh - 140px);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-secondary);
+    }
+
+    /* ==========================================
+       Form Elements
+       ========================================== */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+    }
+
+    .form-label .required {
+      color: var(--status-error);
+      margin-left: 2px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      font-size: 0.875rem;
+      background-color: var(--bg-tertiary);
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      transition: all var(--transition-fast);
+    }
+
+    .form-input:focus {
+      outline: none;
+      background-color: var(--bg-primary);
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .form-hint {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin-top: 0.25rem;
+    }
+
+    /* ==========================================
+       Clipboard Detection Toast
+       ========================================== */
+    .clipboard-toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 1100;
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-normal);
+      max-width: 90vw;
+      width: 400px;
+    }
+
+    .clipboard-toast.active {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .clipboard-toast-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .clipboard-toast-icon {
+      font-size: 1.5rem;
+    }
+
+    .clipboard-toast-title {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .clipboard-toast-content {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      padding: 0.5rem;
+      background-color: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+    }
+
+    .clipboard-toast-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+
+    /* ==========================================
+       Responsive
+       ========================================== */
+    @media (max-width: 640px) {
+      .header {
+        padding: 0.875rem 1rem;
+      }
+
+      .main {
+        padding: 1rem;
+      }
+
+      .meeting-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .meeting-actions {
+        opacity: 1;
+      }
+
+      .modal {
+        max-height: 95vh;
+      }
+    }
+
+    /* ==========================================
+       Scrollbar
+       ========================================== */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-primary);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-tertiary);
+    }
+
+    /* ==========================================
+       Animations
+       ========================================== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .meeting-card {
+      animation: fadeIn 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">📹</div>
+        <span>移动会议管理器</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-icon" id="themeToggle" title="切换主题 (Ctrl+D)">
+          ☀️
+        </button>
+        <button class="btn btn-primary" id="addMeetingBtn">
+          <span>+</span>
+          <span>添加会议</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="searchInput" placeholder="搜索会议主题...">
+      </div>
+    </div>
+
+    <!-- Meeting Grid -->
+    <div class="meeting-grid" id="meetingGrid">
+      <!-- Meeting cards will be rendered here -->
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+      <div class="empty-state-icon">📭</div>
+      <div class="empty-state-title">暂无会议信息</div>
+      <div class="empty-state-desc">点击"添加会议"按钮或粘贴会议邀请文本</div>
+    </div>
+  </main>
+
+  <!-- Meeting Form Modal -->
+  <div class="modal-overlay" id="meetingModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">添加新会议</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="meetingForm">
+          <input type="hidden" id="meetingId">
+          <div class="form-group">
+            <label class="form-label">
+              会议主题<span class="required">*</span>
+            </label>
+            <input type="text" class="form-input" id="meetingTitle" placeholder="输入会议主题" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              会议时间<span class="required">*</span>
+            </label>
+            <input type="datetime-local" class="form-input" id="meetingTime" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">会议号</label>
+            <input type="text" class="form-input" id="meetingNumber" placeholder="例如：378167162">
+          </div>
+          <div class="form-group">
+            <label class="form-label">参会链接</label>
+            <input type="url" class="form-input" id="meetingLink" placeholder="https://...（留空将根据会议号自动生成）">
+          </div>
+          <div class="form-group">
+            <label class="form-label">发起人</label>
+            <input type="text" class="form-input" id="meetingOrganizer" placeholder="例如：郑溪龙">
+          </div>
+          <div class="form-group">
+            <label class="form-label">会议密码</label>
+            <input type="text" class="form-input" id="meetingPassword" placeholder="例如：5938">
+            <div class="form-hint">可选，部分会议需要密码加入</div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalCancel">取消</button>
+        <button class="btn btn-primary" id="modalSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width: 360px;">
+      <div class="modal-header">
+        <h3 class="modal-title">确认删除</h3>
+        <button class="modal-close" id="deleteModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); font-size: 0.9375rem;">
+          确定要删除会议 "<strong id="deleteMeetingTitle" style="color: var(--text-primary);"></strong>" 吗？此操作无法撤销。
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="deleteModalCancel">取消</button>
+        <button class="btn btn-danger" id="deleteModalConfirm">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clipboard Detection Toast -->
+  <div class="clipboard-toast" id="clipboardToast">
+    <div class="clipboard-toast-header">
+      <span class="clipboard-toast-icon">📋</span>
+      <span class="clipboard-toast-title">检测到会议信息</span>
+    </div>
+    <div class="clipboard-toast-content" id="clipboardToastContent">
+      <!-- Parsed content preview -->
+    </div>
+    <div class="clipboard-toast-actions">
+      <button class="btn btn-sm btn-secondary" id="clipboardIgnore">忽略</button>
+      <button class="btn btn-sm btn-primary" id="clipboardImport">导入</button>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // Theme Manager
+    // ==========================================
+    const ThemeManager = {
+      STORAGE_KEY: 'meeting-theme-preference',
+      MODES: ['light', 'dark', 'auto'],
+      ICONS: { light: '☀️', dark: '🌙', auto: '⚙️' },
+
+      init() {
+        const saved = localStorage.getItem(this.STORAGE_KEY) || 'auto';
+        this.apply(saved);
+        this.updateIcon(saved);
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+          if (this.getCurrentMode() === 'auto') {
+            this.apply('auto');
+          }
+        });
+      },
+
+      getCurrentMode() {
+        return localStorage.getItem(this.STORAGE_KEY) || 'auto';
+      },
+
+      toggle() {
+        const current = this.getCurrentMode();
+        const next = this.MODES[(this.MODES.indexOf(current) + 1) % this.MODES.length];
+        localStorage.setItem(this.STORAGE_KEY, next);
+        this.apply(next);
+        this.updateIcon(next);
+        return next;
+      },
+
+      apply(mode) {
+        const isDark = mode === 'dark' ||
+          (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      },
+
+      updateIcon(mode) {
+        const btn = document.getElementById('themeToggle');
+        btn.textContent = this.ICONS[mode];
+        btn.title = `当前模式: ${mode === 'light' ? '浅色' : mode === 'dark' ? '深色' : '自动'} (Ctrl+D切换)`;
+      }
+    };
+
+    // ==========================================
+    // Data Store
+    // ==========================================
+    const DataStore = {
+      STORAGE_KEY: 'mobile_meetings_v1',
+
+      getAll() {
+        try {
+          const data = localStorage.getItem(this.STORAGE_KEY);
+          if (!data) return [];
+          const parsed = JSON.parse(data);
+          return Array.isArray(parsed.meetings) ? parsed.meetings : [];
+        } catch (e) {
+          console.error('Failed to load meetings:', e);
+          return [];
+        }
+      },
+
+      save(meetings) {
+        try {
+          const data = {
+            version: 1,
+            meetings: meetings,
+            lastSync: new Date().toISOString()
+          };
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+          return true;
+        } catch (e) {
+          console.error('Failed to save meetings:', e);
+          alert('保存失败，可能是存储空间不足');
+          return false;
+        }
+      },
+
+      add(meeting) {
+        const meetings = this.getAll();
+        meeting.id = this.generateId();
+        meeting.createdAt = new Date().toISOString();
+        meeting.updatedAt = meeting.createdAt;
+        meetings.push(meeting);
+        return this.save(meetings) ? meeting : null;
+      },
+
+      update(id, updates) {
+        const meetings = this.getAll();
+        const index = meetings.findIndex(m => m.id === id);
+        if (index === -1) return null;
+        meetings[index] = { ...meetings[index], ...updates, updatedAt: new Date().toISOString() };
+        return this.save(meetings) ? meetings[index] : null;
+      },
+
+      delete(id) {
+        const meetings = this.getAll();
+        const filtered = meetings.filter(m => m.id !== id);
+        return this.save(filtered);
+      },
+
+      getById(id) {
+        return this.getAll().find(m => m.id === id);
+      },
+
+      generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+      },
+
+      exists(meeting) {
+        const meetings = this.getAll();
+        return meetings.some(m =>
+          m.title === meeting.title &&
+          m.time === meeting.time &&
+          m.link === meeting.link
+        );
+      }
+    };
+
+    // ==========================================
+    // Meeting Parser
+    // ==========================================
+    const MeetingParser = {
+      parse(text) {
+        const patterns = {
+          title: /会议主题[:：]\s*(.+)/,
+          time: /会议时间[:：]\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}|\d{1,2}月\d{1,2}日\s*\d{1,2}:\d{2})/,
+          meetingNumber: /(?:移动会议|会议号)[:：]\s*(\d+)/,
+          password: /密码[:：]\s*(\d+)/,
+          link: /参会链接[:：]\s*(https?:\/\/\S+)/,
+          organizer: /(.+?)邀请您参加/
+        };
+
+        const result = {};
+        for (const [key, pattern] of Object.entries(patterns)) {
+          const match = text.match(pattern);
+          result[key] = match ? match[1].trim() : '';
+        }
+
+        // Normalize time format
+        if (result.time && !result.time.includes('-')) {
+          result.time = this.normalizeTimeFormat(result.time);
+        }
+
+        // Convert to ISO format for datetime-local input
+        if (result.time && result.time.includes('-')) {
+          result.time = result.time.replace(/\s+/g, 'T');
+        }
+
+        return result;
+      },
+
+      normalizeTimeFormat(timeStr) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const match = timeStr.match(/(\d{1,2})月(\d{1,2})日\s*(\d{1,2}):(\d{2})/);
+        if (match) {
+          const [, month, day, hour, minute] = match;
+          return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${hour.padStart(2, '0')}:${minute}`;
+        }
+        return timeStr;
+      },
+
+      isMeetingText(text) {
+        const keywords = ['会议主题', '会议时间', '移动会议', '会议号', '参会链接'];
+        return keywords.some(kw => text.includes(kw));
+      }
+    };
+
+    // ==========================================
+    // Meeting Status Calculator
+    // ==========================================
+    const MeetingStatus = {
+      getStatus(meetingTime) {
+        const now = new Date();
+        const time = new Date(meetingTime);
+        const diff = time - now;
+        const diffMinutes = Math.floor(diff / 60000);
+
+        if (diffMinutes < -30) {
+          return { type: 'ended', label: '已结束', color: 'var(--status-ended)' };
+        } else if (diffMinutes >= -30 && diffMinutes <= 30) {
+          return { type: 'ongoing', label: '进行中', color: 'var(--status-active)', pulse: true };
+        } else if (diffMinutes > 30 && diffMinutes <= 1440) {
+          return { type: 'upcoming', label: '即将开始', color: 'var(--status-upcoming)' };
+        } else {
+          return { type: 'pending', label: '未开始', color: 'var(--status-pending)' };
+        }
+      },
+
+      formatTimeLeft(meetingTime) {
+        const now = new Date();
+        const time = new Date(meetingTime);
+        const diff = time - now;
+        const diffMinutes = Math.floor(diff / 60000);
+
+        if (diffMinutes < 0) {
+          const passed = Math.abs(diffMinutes);
+          if (passed < 60) return `${passed}分钟前`;
+          if (passed < 1440) return `${Math.floor(passed / 60)}小时前`;
+          return `${Math.floor(passed / 1440)}天前`;
+        } else {
+          if (diffMinutes < 60) return `${diffMinutes}分钟后`;
+          if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)}小时后`;
+          return `${Math.floor(diffMinutes / 1440)}天后`;
+        }
+      }
+    };
+
+    // ==========================================
+    // UI Renderer
+    // ==========================================
+    const UI = {
+      init() {
+        this.bindEvents();
+        this.render();
+        this.startStatusUpdate();
+        this.checkClipboard();
+      },
+
+      bindEvents() {
+        // Add meeting
+        document.getElementById('addMeetingBtn').addEventListener('click', () => this.openModal());
+
+        // Theme toggle
+        document.getElementById('themeToggle').addEventListener('click', () => ThemeManager.toggle());
+
+        // Modal close
+        document.getElementById('modalClose').addEventListener('click', () => this.closeModal());
+        document.getElementById('modalCancel').addEventListener('click', () => this.closeModal());
+        document.getElementById('meetingModal').addEventListener('click', (e) => {
+          if (e.target === e.currentTarget) this.closeModal();
+        });
+
+        // Save meeting
+        document.getElementById('modalSave').addEventListener('click', () => this.saveMeeting());
+
+        // Delete modal
+        document.getElementById('deleteModalClose').addEventListener('click', () => this.closeDeleteModal());
+        document.getElementById('deleteModalCancel').addEventListener('click', () => this.closeDeleteModal());
+        document.getElementById('deleteModal').addEventListener('click', (e) => {
+          if (e.target === e.currentTarget) this.closeDeleteModal();
+        });
+        document.getElementById('deleteModalConfirm').addEventListener('click', () => this.confirmDelete());
+
+        // Clipboard toast
+        document.getElementById('clipboardIgnore').addEventListener('click', () => this.hideClipboardToast());
+        document.getElementById('clipboardImport').addEventListener('click', () => this.importFromClipboard());
+
+        // Search
+        document.getElementById('searchInput').addEventListener('input', (e) => this.render(e.target.value));
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            this.closeModal();
+            this.closeDeleteModal();
+            this.hideClipboardToast();
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            this.openModal();
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+            e.preventDefault();
+            ThemeManager.toggle();
+          }
+        });
+
+        // Visibility change - check clipboard when page becomes visible
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            setTimeout(() => this.checkClipboard(), 500);
+          }
+        });
+      },
+
+      render(searchTerm = '') {
+        const grid = document.getElementById('meetingGrid');
+        const emptyState = document.getElementById('emptyState');
+        let meetings = DataStore.getAll();
+
+        // Sort by time: upcoming first, then future, then ended
+        meetings.sort((a, b) => {
+          const now = new Date();
+          const timeA = new Date(a.time);
+          const timeB = new Date(b.time);
+          const statusA = MeetingStatus.getStatus(a.time);
+          const statusB = MeetingStatus.getStatus(b.time);
+
+          // 1. 进行中/即将开始的排在最前面
+          if ((statusA.type === 'ongoing' || statusA.type === 'upcoming') &&
+              statusB.type !== 'ongoing' && statusB.type !== 'upcoming') {
+            return -1;
+          }
+          if ((statusB.type === 'ongoing' || statusB.type === 'upcoming') &&
+              statusA.type !== 'ongoing' && statusA.type !== 'upcoming') {
+            return 1;
+          }
+
+          // 2. 都是进行中/即将开始的，按时间由近到远
+          if ((statusA.type === 'ongoing' || statusA.type === 'upcoming') &&
+              (statusB.type === 'ongoing' || statusB.type === 'upcoming')) {
+            return timeA - timeB;
+          }
+
+          // 3. 都是未开始的，按时间由近到远
+          if (statusA.type === 'pending' && statusB.type === 'pending') {
+            return timeA - timeB;
+          }
+
+          // 4. 都是已结束的，按时间由近到远（最近的结束排在前面）
+          if (statusA.type === 'ended' && statusB.type === 'ended') {
+            return timeB - timeA;
+          }
+
+          // 5. 默认：未开始的在已结束的前面
+          if (statusA.type === 'pending' && statusB.type === 'ended') {
+            return -1;
+          }
+          if (statusA.type === 'ended' && statusB.type === 'pending') {
+            return 1;
+          }
+
+          return timeA - timeB;
+        });
+
+        // Filter by search term
+        if (searchTerm) {
+          meetings = meetings.filter(m =>
+            m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            m.organizer?.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+        }
+
+        if (meetings.length === 0) {
+          grid.innerHTML = '';
+          emptyState.style.display = 'block';
+          return;
+        }
+
+        emptyState.style.display = 'none';
+        grid.innerHTML = meetings.map(meeting => this.createMeetingCard(meeting)).join('');
+
+        // Bind card events
+        meetings.forEach(meeting => {
+          const card = document.querySelector(`[data-id="${meeting.id}"]`);
+          if (card) {
+            card.querySelector('.btn-edit').addEventListener('click', () => this.editMeeting(meeting.id));
+            card.querySelector('.btn-delete').addEventListener('click', () => this.deleteMeeting(meeting.id));
+            card.querySelector('.btn-join').addEventListener('click', () => this.joinMeeting(meeting.link));
+            const togglePassword = card.querySelector('.btn-toggle-password');
+            if (togglePassword) {
+              togglePassword.addEventListener('click', () => this.togglePassword(meeting.id));
+            }
+          }
+        });
+      },
+
+      createMeetingCard(meeting) {
+        const status = MeetingStatus.getStatus(meeting.time);
+        const formattedTime = new Date(meeting.time).toLocaleString('zh-CN', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        const timeLeft = MeetingStatus.formatTimeLeft(meeting.time);
+
+        const passwordHtml = meeting.password ? `
+          <div class="meeting-info-item">
+            <span class="icon">🔐</span>
+            <span class="password-value">
+              <span class="password-text" data-password="${meeting.password}" data-visible="false">
+                <span class="password-mask">••••</span>
+              </span>
+              <button class="btn-toggle-password">显示</button>
+            </span>
+          </div>
+        ` : '';
+
+        const organizerHtml = meeting.organizer ? `
+          <div class="meeting-info-item">
+            <span class="icon">👤</span>
+            <span class="value">${meeting.organizer}</span>
+          </div>
+        ` : '';
+
+        return `
+          <div class="meeting-card" data-id="${meeting.id}">
+            <div class="meeting-card-header">
+              <div class="meeting-title-wrapper">
+                <span class="status-indicator ${status.pulse ? 'pulse' : ''}" style="background-color: ${status.color};"></span>
+                <h3 class="meeting-title" title="${meeting.title}">${meeting.title}</h3>
+              </div>
+              <div class="meeting-actions">
+                <button class="btn-icon-sm btn-edit" title="编辑">✏️</button>
+                <button class="btn-icon-sm btn-delete" title="删除">🗑️</button>
+              </div>
+            </div>
+            <div class="meeting-info">
+              <div class="meeting-info-item">
+                <span class="icon">📅</span>
+                <span class="value">${formattedTime}</span>
+                <span style="color: var(--text-tertiary); margin-left: auto; font-size: 0.75rem;">${timeLeft}</span>
+              </div>
+              ${meeting.meetingNumber ? `
+                <div class="meeting-info-item">
+                  <span class="icon">🔢</span>
+                  <span class="value">${meeting.meetingNumber}</span>
+                </div>
+              ` : ''}
+              ${passwordHtml}
+              ${organizerHtml}
+            </div>
+            <div class="meeting-card-footer">
+              <button class="btn btn-primary btn-join">加入会议</button>
+            </div>
+          </div>
+        `;
+      },
+
+      openModal(meeting = null) {
+        const modal = document.getElementById('meetingModal');
+        const title = document.getElementById('modalTitle');
+        const form = document.getElementById('meetingForm');
+
+        if (meeting) {
+          title.textContent = '编辑会议';
+          document.getElementById('meetingId').value = meeting.id;
+          document.getElementById('meetingTitle').value = meeting.title;
+          document.getElementById('meetingTime').value = meeting.time;
+          document.getElementById('meetingNumber').value = meeting.meetingNumber || '';
+          document.getElementById('meetingLink').value = meeting.link;
+          document.getElementById('meetingOrganizer').value = meeting.organizer || '';
+          document.getElementById('meetingPassword').value = meeting.password || '';
+          modal.classList.add('active');
+          document.getElementById('meetingTitle').focus();
+        } else {
+          // 添加新会议 - 尝试从剪贴板读取
+          title.textContent = '添加新会议';
+          form.reset();
+          document.getElementById('meetingId').value = '';
+
+          // 尝试读取剪贴板并自动填充
+          this.fillFormFromClipboard();
+
+          modal.classList.add('active');
+          document.getElementById('meetingTitle').focus();
+        }
+      },
+
+      async fillFormFromClipboard() {
+        try {
+          if (!navigator.clipboard || !navigator.clipboard.readText) return;
+
+          const text = await navigator.clipboard.readText();
+          if (!text || text.length > 5000) return;
+
+          // 检查是否为会议邀请文本
+          if (MeetingParser.isMeetingText(text)) {
+            const parsed = MeetingParser.parse(text);
+
+            // 填充解析到的字段
+            if (parsed.title) {
+              document.getElementById('meetingTitle').value = parsed.title;
+            }
+            if (parsed.time) {
+              document.getElementById('meetingTime').value = parsed.time;
+            } else {
+              // 未解析到时间，使用默认值
+              const now = new Date();
+              now.setHours(now.getHours() + 1);
+              now.setMinutes(0);
+              document.getElementById('meetingTime').value = now.toISOString().slice(0, 16);
+            }
+            if (parsed.meetingNumber) {
+              document.getElementById('meetingNumber').value = parsed.meetingNumber;
+            }
+            if (parsed.link) {
+              document.getElementById('meetingLink').value = parsed.link;
+            } else if (parsed.meetingNumber) {
+              // 没有链接但有会议号，自动生成链接
+              const generatedLink = `https://yunshixun.125339.com.cn/share/${parsed.meetingNumber}?xlocation=PROD`;
+              document.getElementById('meetingLink').value = generatedLink;
+            }
+            if (parsed.organizer) {
+              document.getElementById('meetingOrganizer').value = parsed.organizer;
+            }
+            if (parsed.password) {
+              document.getElementById('meetingPassword').value = parsed.password;
+            }
+
+            // 显示提示
+            let toastMsg = '已从剪贴板自动填充会议信息';
+            if (!parsed.link && parsed.meetingNumber) {
+              toastMsg = '已自动填充会议信息并生成参会链接';
+            }
+            this.showToast(toastMsg);
+          } else {
+            // 不是会议文本，使用默认时间
+            const now = new Date();
+            now.setHours(now.getHours() + 1);
+            now.setMinutes(0);
+            document.getElementById('meetingTime').value = now.toISOString().slice(0, 16);
+          }
+        } catch (e) {
+          // 剪贴板读取失败，使用默认时间
+          const now = new Date();
+          now.setHours(now.getHours() + 1);
+          now.setMinutes(0);
+          document.getElementById('meetingTime').value = now.toISOString().slice(0, 16);
+          console.log('无法读取剪贴板:', e);
+        }
+      },
+
+      showToast(message) {
+        // 创建临时提示
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+          position: fixed;
+          top: 80px;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: var(--accent-primary);
+          color: white;
+          padding: 0.75rem 1.5rem;
+          border-radius: var(--radius-lg);
+          font-size: 0.875rem;
+          font-weight: 500;
+          box-shadow: var(--shadow-lg);
+          z-index: 2000;
+          animation: fadeIn 0.3s ease;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        // 3秒后自动移除
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transition = 'opacity 0.3s ease';
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      },
+
+      closeModal() {
+        document.getElementById('meetingModal').classList.remove('active');
+      },
+
+      saveMeeting() {
+        const id = document.getElementById('meetingId').value;
+        let link = document.getElementById('meetingLink').value.trim();
+        const meetingNumber = document.getElementById('meetingNumber').value.trim();
+
+        // 如果没有链接但有会议号，自动生成链接
+        if (!link && meetingNumber) {
+          link = `https://yunshixun.125339.com.cn/share/${meetingNumber}?xlocation=PROD`;
+        }
+
+        const meeting = {
+          title: document.getElementById('meetingTitle').value.trim(),
+          time: document.getElementById('meetingTime').value,
+          meetingNumber: meetingNumber,
+          link: link,
+          organizer: document.getElementById('meetingOrganizer').value.trim(),
+          password: document.getElementById('meetingPassword').value.trim()
+        };
+
+        if (!meeting.title || !meeting.time) {
+          alert('请填写必填项：会议主题、会议时间');
+          return;
+        }
+
+        let result;
+        if (id) {
+          result = DataStore.update(id, meeting);
+        } else {
+          result = DataStore.add(meeting);
+        }
+
+        if (result) {
+          // 如果链接是自动生成的，显示提示
+          if (!document.getElementById('meetingLink').value.trim() && meetingNumber) {
+            this.showToast('会议已保存，参会链接已根据会议号自动生成');
+          }
+          this.closeModal();
+          this.render(document.getElementById('searchInput').value);
+        }
+      },
+
+      editMeeting(id) {
+        const meeting = DataStore.getById(id);
+        if (meeting) {
+          this.openModal(meeting);
+        }
+      },
+
+      deleteMeeting(id) {
+        const meeting = DataStore.getById(id);
+        if (meeting) {
+          this.meetingToDelete = id;
+          document.getElementById('deleteMeetingTitle').textContent = meeting.title;
+          document.getElementById('deleteModal').classList.add('active');
+        }
+      },
+
+      closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('active');
+        this.meetingToDelete = null;
+      },
+
+      confirmDelete() {
+        if (this.meetingToDelete) {
+          DataStore.delete(this.meetingToDelete);
+          this.closeDeleteModal();
+          this.render(document.getElementById('searchInput').value);
+        }
+      },
+
+      joinMeeting(link) {
+        if (!link) {
+          alert('会议链接无效');
+          return;
+        }
+        window.open(link, '_blank', 'noopener,noreferrer');
+      },
+
+      togglePassword(meetingId) {
+        const card = document.querySelector(`[data-id="${meetingId}"]`);
+        const passwordText = card.querySelector('.password-text');
+        const toggleBtn = card.querySelector('.btn-toggle-password');
+        const isVisible = passwordText.dataset.visible === 'true';
+        const password = passwordText.dataset.password;
+
+        if (isVisible) {
+          passwordText.innerHTML = '<span class="password-mask">••••</span>';
+          passwordText.dataset.visible = 'false';
+          toggleBtn.textContent = '显示';
+        } else {
+          passwordText.innerHTML = `<span class="value">${password}</span>`;
+          passwordText.dataset.visible = 'true';
+          toggleBtn.textContent = '隐藏';
+        }
+      },
+
+      startStatusUpdate() {
+        // Update every minute
+        setInterval(() => {
+          this.render(document.getElementById('searchInput').value);
+        }, 60000);
+      },
+
+      async checkClipboard() {
+        try {
+          if (!navigator.clipboard || !navigator.clipboard.readText) return;
+
+          const text = await navigator.clipboard.readText();
+          if (!text || text.length > 5000) return;
+
+          if (MeetingParser.isMeetingText(text)) {
+            const parsed = MeetingParser.parse(text);
+            if (parsed.title && !DataStore.exists(parsed)) {
+              this.showClipboardToast(parsed, text);
+            }
+          }
+        } catch (e) {
+          // Clipboard access denied or not available
+          console.log('Clipboard access not available');
+        }
+      },
+
+      showClipboardToast(parsed, originalText) {
+        this.parsedMeeting = parsed;
+        this.originalText = originalText;
+
+        const content = document.getElementById('clipboardToastContent');
+        content.innerHTML = `
+          <strong>${parsed.title || '未识别主题'}</strong><br>
+          ${parsed.time ? `时间: ${parsed.time.replace('T', ' ')}<br>` : ''}
+          ${parsed.meetingNumber ? `会议号: ${parsed.meetingNumber}<br>` : ''}
+          ${parsed.password ? `密码: ${parsed.password}<br>` : ''}
+        `;
+
+        document.getElementById('clipboardToast').classList.add('active');
+
+        // Auto hide after 10 seconds
+        setTimeout(() => {
+          this.hideClipboardToast();
+        }, 10000);
+      },
+
+      hideClipboardToast() {
+        document.getElementById('clipboardToast').classList.remove('active');
+        this.parsedMeeting = null;
+        this.originalText = null;
+      },
+
+      importFromClipboard() {
+        if (this.parsedMeeting) {
+          document.getElementById('meetingTitle').value = this.parsedMeeting.title || '';
+          document.getElementById('meetingTime').value = this.parsedMeeting.time || '';
+          document.getElementById('meetingNumber').value = this.parsedMeeting.meetingNumber || '';
+          document.getElementById('meetingLink').value = this.parsedMeeting.link || '';
+          document.getElementById('meetingOrganizer').value = this.parsedMeeting.organizer || '';
+          document.getElementById('meetingPassword').value = this.parsedMeeting.password || '';
+
+          this.hideClipboardToast();
+          this.openModal();
+        }
+      }
+    };
+
+    // ==========================================
+    // Initialize App
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      ThemeManager.init();
+      UI.init();
+    });
+  </script>
+</body>
+</html>
