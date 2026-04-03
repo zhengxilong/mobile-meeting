@@ -1561,7 +1561,7 @@
               document.getElementById('meetingLink').value = parsed.link;
             } else if (parsed.meetingNumber) {
               // 没有链接但有会议号，自动生成链接
-              const generatedLink = `https://meeting.example.com/share/${parsed.meetingNumber}?xlocation=DEMO`;
+              const generatedLink = `https://meeting.example.com/share/${parsed.meetingNumber}?xlocation=PROD`;
               document.getElementById('meetingLink').value = generatedLink;
             }
             if (parsed.organizer) {
@@ -1634,7 +1634,7 @@
 
         // 如果没有链接但有会议号，自动生成链接
         if (!link && meetingNumber) {
-          link = `https://meeting.example.com/share/${meetingNumber}?xlocation=DEMO`;
+          link = `https://meeting.example.com/share/${meetingNumber}?xlocation=PROD`;
         }
 
         const meeting = {
@@ -1712,7 +1712,7 @@
           return;
         }
 
-        const link = `https://meeting.example.com/share/${meetingNumber}?xlocation=DEMO`;
+        const link = `https://meeting.example.com/share/${meetingNumber}?xlocation=PROD`;
         window.open(link, '_blank', 'noopener,noreferrer');
       },
 
