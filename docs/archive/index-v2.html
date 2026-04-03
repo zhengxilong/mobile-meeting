@@ -26,7 +26,7 @@
       --border-primary: #D9D9E3;
       --border-secondary: #ECECF1;
 
-      /* Accent Colors (中国移动蓝) */
+      /* Accent Colors (Theme Blue) */
       --accent-primary: #0085D0;
       --accent-hover: #0066AA;
       --accent-light: #E6F4FC;
@@ -968,7 +968,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">发起人</label>
-            <input type="text" class="form-input" id="meetingOrganizer" placeholder="例如：郑溪龙">
+            <input type="text" class="form-input" id="meetingOrganizer" placeholder="例如：会议组织者">
           </div>
           <div class="form-group">
             <label class="form-label">会议密码</label>
@@ -1561,7 +1561,7 @@
               document.getElementById('meetingLink').value = parsed.link;
             } else if (parsed.meetingNumber) {
               // 没有链接但有会议号，自动生成链接
-              const generatedLink = `https://yunshixun.125339.com.cn/share/${parsed.meetingNumber}?xlocation=PROD`;
+              const generatedLink = `https://meeting.example.com/share/${parsed.meetingNumber}?xlocation=DEMO`;
               document.getElementById('meetingLink').value = generatedLink;
             }
             if (parsed.organizer) {
@@ -1634,7 +1634,7 @@
 
         // 如果没有链接但有会议号，自动生成链接
         if (!link && meetingNumber) {
-          link = `https://yunshixun.125339.com.cn/share/${meetingNumber}?xlocation=PROD`;
+          link = `https://meeting.example.com/share/${meetingNumber}?xlocation=DEMO`;
         }
 
         const meeting = {
@@ -1712,7 +1712,7 @@
           return;
         }
 
-        const link = `https://yunshixun.125339.com.cn/share/${meetingNumber}?xlocation=PROD`;
+        const link = `https://meeting.example.com/share/${meetingNumber}?xlocation=DEMO`;
         window.open(link, '_blank', 'noopener,noreferrer');
       },
 

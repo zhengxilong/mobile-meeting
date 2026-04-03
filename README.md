@@ -15,11 +15,9 @@
 
 ## 在线使用
 
-将仓库克隆到本地后，直接用浏览器打开 [`index.html`](./index.html) 即可，无需安装依赖或启动服务。
+下载项目文件后，直接用浏览器打开 [`index.html`](./index.html) 即可，无需安装依赖或启动服务。
 
 ```bash
-git clone https://github.com/zhengxilong/mobile-meeting.git
-cd mobile-meeting
 open index.html
 ```
 
@@ -53,11 +51,11 @@ open index.html
 支持从剪贴板识别如下格式的会议邀请文本：
 
 ```text
-郑溪龙邀请您参加移动会议
-会议主题：中瑞富盛交流
-会议时间：2026-03-04  10:00  (GMT+08:00) 北京、重庆、香港特别行政区、乌鲁木齐、台北
+会议组织者邀请您参加移动会议
+会议主题：项目沟通会
+会议时间：2026-03-04  10:00  (GMT+08:00) 示例时区城市
 移动会议：378167162
-参会链接：https://yunshixun.125339.com.cn/share/378167162?xlocation=PROD
+参会链接：https://meeting.example.com/share/378167162?xlocation=DEMO
 点击链接，进入H5邀请页面。
 ```
 
